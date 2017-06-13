@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MapDirection</string>
+    <string name="title_activity_maps">Map</string>
+
+    <!-- All -->
+    <string name="all.message.ask_location_permission">The app needs location permission to determinate current user\'s location on map</string>
+    <string name="all.message.location_permission_denied">You need to turn location permission on manually to continue using the app</string>
+    <string name="all.button.allow">Allow</string>
+    <string name="all.button.deny">Deny</string>
+
+    <!-- Maps -->
+    <string name="maps.searching_placeholder.source_place">From</string>
+    <string name="maps.searching_placeholder.dest_place">To</string>
+</resources>

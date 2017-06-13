@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- All -->
+    <dimen name="all.textview_search_border">4dp</dimen>
+    <dimen name="all.activity_horizontal_margin">16dp</dimen>
+    <dimen name="all.activity_vertical_margin">16dp</dimen>
+
+    <!-- Maps screen -->
+    <dimen name="maps.searching_wrapper_padding">16dp</dimen>
+    <dimen name="maps.searching_placeholder_textsize">16sp</dimen>
+    <dimen name="maps.searching_placeholder_horizontal_padding">4dp</dimen>
+    <dimen name="maps.searching_placeholder_vertical_padding">8dp</dimen>
+</resources>

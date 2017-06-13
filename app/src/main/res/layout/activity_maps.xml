@@ -1,0 +1,53 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/colorMain"
+        android:padding="@dimen/maps.searching_wrapper_padding">
+
+        <TextView
+            android:id="@+id/textview_maps_source_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/maps.searching_placeholder_horizontal_padding"
+            android:paddingBottom="@dimen/maps.searching_placeholder_horizontal_padding"
+            android:paddingStart="@dimen/maps.searching_placeholder_vertical_padding"
+            android:paddingEnd="@dimen/maps.searching_placeholder_vertical_padding"
+            android:maxLines="1"
+            android:layout_marginBottom="16dp"
+            android:textColor="@color/colorWhite"
+            android:textSize="@dimen/maps.searching_placeholder_textsize"
+            android:text="@string/maps.searching_placeholder.source_place"
+            android:background="@drawable/textview_background_search"/>
+
+        <TextView
+            android:id="@+id/textview_maps_dest_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/maps.searching_placeholder_horizontal_padding"
+            android:paddingBottom="@dimen/maps.searching_placeholder_horizontal_padding"
+            android:paddingStart="@dimen/maps.searching_placeholder_vertical_padding"
+            android:paddingEnd="@dimen/maps.searching_placeholder_vertical_padding"
+            android:maxLines="1"
+            android:textColor="@color/colorWhite"
+            android:textSize="@dimen/maps.searching_placeholder_textsize"
+            android:text="@string/maps.searching_placeholder.dest_place"
+            android:background="@drawable/textview_background_search"/>
+
+    </LinearLayout>
+
+    <fragment
+        android:id="@+id/fragment_maps_map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.example.phattn.mapdirection.ui.map.MapsActivity" />
+
+</LinearLayout>
