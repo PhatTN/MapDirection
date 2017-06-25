@@ -2,6 +2,11 @@
 <resources>
     <color name="colorMain">#4285f4</color>
 
+    <color name="colorTransparent">#00FFFFFF</color>
+    <color name="colorBlack">#000000</color>
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorWhite30">#4FFFFFFF</color>
+    <color name="colorGray">#EEEEEE</color>
+
+    <color name="textColorGray">#414141</color>
 </resources>

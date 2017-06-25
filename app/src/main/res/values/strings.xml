@@ -11,4 +11,7 @@
     <!-- Maps -->
     <string name="maps.searching_placeholder.source_place">From</string>
     <string name="maps.searching_placeholder.dest_place">To</string>
+
+    <!-- SearchPredictions -->
+    <string name="searchprediction.textview.search_histories">Search Histories</string>
 </resources>

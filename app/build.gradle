@@ -36,8 +36,11 @@ dependencies {
     compile "android.arch.lifecycle:runtime:$arch_version"
     compile "android.arch.lifecycle:extensions:$arch_version"
     compile "com.squareup.retrofit2:retrofit:$retrofit_version"
-    compile "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    compile "com.squareup.retrofit2:converter-moshi:$retrofit_version"
+    compile "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
     compile "com.github.bumptech.glide:glide:$glide_version"
+
+    compile "io.reactivex.rxjava2:rxkotlin:$rxkotlin_version"
 
     compile "com.google.android.gms:play-services-maps:$play_services_version"
     compile "com.google.android.gms:play-services-location:$play_services_version"
@@ -54,6 +57,15 @@ dependencies {
         exclude module: "support-v13"
     }
 
+    compile "com.google.maps.android:android-maps-utils:$android_maps_utils_version"
+    compile "com.jakewharton.threetenabp:threetenabp:$threetenabp_version"
+
+    compile "com.facebook.stetho:stetho:$stetho_version"
+    compile "com.facebook.stetho:stetho-okhttp3:$stetho_version"
+    debugCompile "com.squareup.leakcanary:leakcanary-android:$leakcanary_version"
+    releaseCompile "com.squareup.leakcanary:leakcanary-android-no-op:$leakcanary_version"
+    testCompile "com.squareup.leakcanary:leakcanary-android-no-op:$leakcanary_version"
+
     kapt "com.google.dagger:dagger-android-processor:$dagger_version"
     kapt "com.google.dagger:dagger-compiler:$dagger_version"
     kapt "android.arch.persistence.room:compiler:$arch_version"
@@ -63,7 +75,7 @@ dependencies {
 
     testCompile "junit:junit:$junit_version"
     testCompile "com.squareup.okhttp3:mockwebserver:$mockwebserver_version"
-    testCompile ("android.arch.core:core-testing:$arch_version", {
+    testCompile("android.arch.core:core-testing:$arch_version", {
         exclude group: 'com.android.support', module: 'support-compat'
         exclude group: 'com.android.support', module: 'support-annotations'
         exclude group: 'com.android.support', module: 'support-core-utils'

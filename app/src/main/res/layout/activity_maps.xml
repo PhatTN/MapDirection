@@ -13,7 +13,7 @@
         android:padding="@dimen/maps.searching_wrapper_padding">
 
         <TextView
-            android:id="@+id/textview_maps_source_place"
+            android:id="@+id/maps_textview_source_place"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/maps.searching_placeholder_horizontal_padding"
@@ -28,7 +28,7 @@
             android:background="@drawable/textview_background_search"/>
 
         <TextView
-            android:id="@+id/textview_maps_dest_place"
+            android:id="@+id/maps_textview_dest_place"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/maps.searching_placeholder_horizontal_padding"
@@ -44,7 +44,7 @@
     </LinearLayout>
 
     <fragment
-        android:id="@+id/fragment_maps_map"
+        android:id="@+id/maps_fragment_map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

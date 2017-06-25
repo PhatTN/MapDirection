@@ -6,6 +6,17 @@
         <item name="colorPrimary">@color/colorMain</item>
         <item name="colorPrimaryDark">@color/colorMain</item>
         <item name="colorAccent">@color/colorMain</item>
+        <item name="android:windowBackground">@color/colorGray</item>
+    </style>
+
+    <style name="AppTheme.TextView">
+        <item name="android:textSize">@dimen/all.font_size.medium</item>
+        <item name="android:textColor">@color/colorBlack</item>
+    </style>
+
+    <style name="AppTheme.TextView.SubTextView">
+        <item name="android:textSize">@dimen/all.font_size.small</item>
+        <item name="android:textColor">@color/textColorGray</item>
     </style>
 
 </resources>

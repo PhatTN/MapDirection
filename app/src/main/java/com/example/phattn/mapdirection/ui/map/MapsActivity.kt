@@ -6,44 +6,62 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.arch.lifecycle.LifecycleActivity
 import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
+import android.location.Location
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.widget.TextView
 import android.widget.Toast
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
 import com.example.phattn.mapdirection.R
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
-import com.google.android.gms.common.GooglePlayServicesRepairableException
-import com.google.android.gms.location.places.AutocompleteFilter
+import com.example.phattn.mapdirection.model.Status
+import com.example.phattn.mapdirection.ui.search_autocomplete.SearchAutocompleteActivity
 import com.google.android.gms.location.places.ui.PlaceAutocomplete
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.*
+import dagger.android.AndroidInjection
 import permissions.dispatcher.*
 import timber.log.Timber
+import javax.inject.Inject
 
 @RuntimePermissions
 class MapsActivity : LifecycleActivity(), OnMapReadyCallback {
 
     companion object {
-        const val PLACE_FROM_AUTO_COMPLETE_REQUEST = 101
-        const val PLACE_TO_AUTO_COMPLETE_REQUEST = 102
-        const val PLACE_RESTRICT_COUNTRY_VN = "VN"
+        const val AR_CODE_PLACE_SOURCE = 101
+        const val AR_CODE_PLACE_DEST = 102
     }
 
+    @Inject lateinit var viewModelFactory : ViewModelProvider.Factory
+
     private lateinit var mMap: GoogleMap
+    private var mRoutePolyline: Polyline? = null
+
+    private var mSourceMarker: Marker? = null
+    private var mDestMarker: Marker? = null
+
+    private var mSourceMarkerOptions: MarkerOptions? = null
+    private var mDestMarkerOptions: MarkerOptions? = null
+
+    private lateinit var mViewModel : MapsViewModel
 
     // Binding views
-    @BindView(R.id.textview_maps_source_place) lateinit var mTextViewSourcePlace : TextView
-    @BindView(R.id.textview_maps_dest_place) lateinit var mTextViewDestPlace : TextView
+    @BindView(R.id.maps_textview_source_place) lateinit var mSourcePlaceTextView: TextView
+    @BindView(R.id.maps_textview_dest_place) lateinit var mDestPlaceTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
         ButterKnife.bind(this)
+        AndroidInjection.inject(this)
 
         MapsActivityPermissionsDispatcher.initializeMapWithCheck(this)
     }
@@ -52,7 +70,7 @@ class MapsActivity : LifecycleActivity(), OnMapReadyCallback {
     fun initializeMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.fragment_maps_map) as SupportMapFragment
+                .findFragmentById(R.id.maps_fragment_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -62,19 +80,127 @@ class MapsActivity : LifecycleActivity(), OnMapReadyCallback {
         mMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
         mMap.isMyLocationEnabled = true
 
-        val model = ViewModelProviders.of(this).get(MapsViewModel::class.java)
-        model.getLocation().observe(this, Observer { location ->
-            Timber.d("Location: ${location?.latitude}, ${location?.longitude}")
-            location.let {
-                val latLng = LatLng(location!!.latitude, location.longitude)
-                moveCamera(latLng)
+        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(MapsViewModel::class.java)
+        mViewModel.getLocation().observe(this, object: Observer<Location> {
+            override fun onChanged(location: Location?) {
+                Timber.d("Location: ${location?.latitude}, ${location?.longitude}")
+                Timber.d("onChange: Source PlaceId: ${mViewModel.mSourcePlaceId.value}")
+                if (location != null) {
+                    val latLng = LatLng(location.latitude, location.longitude)
+                    moveCamera(latLng)
+                    mViewModel.getLocation().removeObserver(this)
+                }
+            }
+        })
+
+        mViewModel.mSourcePlace.observe(this, Observer { sourcePlace ->
+            sourcePlace?.let {
+                when (sourcePlace.status) {
+                    Status.SUCCESS -> {
+                        Timber.d("Source placeId: ${sourcePlace.data?.latLng}")
+                        sourcePlace.data?.let {
+                            addSourceMarker(sourcePlace.data.latLng)
+                            moveCamera(sourcePlace.data.latLng)
+                            mSourcePlaceTextView.text = sourcePlace.data.name
+                        }
+                        mViewModel.getDirection()
+                    }
+                    Status.LOADING -> {
+                        // TODO handle loading case
+                    }
+                    Status.ERROR -> {
+                        // TODO handle error case
+                    }
+                }
+            }
+        })
+
+        mViewModel.mDestPlace.observe(this, Observer { destPlace ->
+            destPlace?.let {
+                when (destPlace.status) {
+                    Status.SUCCESS -> {
+                        Timber.d("Dest placeId: ${destPlace.data?.latLng}")
+                        destPlace.data?.let {
+                            addDestMarker(destPlace.data.latLng)
+                            moveCamera(destPlace.data.latLng)
+                            mDestPlaceTextView.text = destPlace.data.name
+                        }
+                        mViewModel.getDirection()
+                    }
+                    Status.LOADING -> {
+                        // TODO handle loading case
+                    }
+                    Status.ERROR -> {
+                        // TODO handle error case
+                    }
+                }
+            }
+        })
+
+        mViewModel.mPointsData.observe(this, Observer { points ->
+            points?.let {
+                when (points.status) {
+                    Status.SUCCESS -> {
+                        mRoutePolyline?.remove()
+                        val lineOptions = PolylineOptions()
+                        lineOptions.addAll(points.data)
+                        lineOptions.width(12f /* line width */)
+                        lineOptions.color(ContextCompat.getColor(this, R.color.colorMain))
+                        lineOptions.geodesic(true)
+
+                        // Drawing polyline on the Google Maps
+                        mRoutePolyline = mMap.addPolyline(lineOptions)
+
+                        val builder = LatLngBounds.Builder()
+                        for (latLng in points.data!!) {
+                            builder.include(latLng)
+                        }
+
+                        zoomRoute(builder.build(), 100 /* routePadding */)
+                    }
+                    Status.LOADING -> {
+                        // TODO handle loading case
+                    }
+                    Status.ERROR -> {
+                        // TODO handle error case
+                    }
+                }
             }
         })
     }
 
     private fun moveCamera(latLng: LatLng) {
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(10f), 2000, null)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f /* zoom level */))
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(15f /* zoom level */), 2000 /* duration */, null)
+    }
+
+    private fun zoomRoute(latLngBounds: LatLngBounds, routePadding: Int) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding))
+    }
+
+    private fun addSourceMarker(latLng: LatLng) {
+//        mSourceMarker?.let { mSourceMarker!!.remove() }
+        if (mSourceMarkerOptions == null) {
+            mSourceMarkerOptions = MarkerOptions()
+            mSourceMarkerOptions!!.position(latLng)
+            mSourceMarkerOptions!!.icon(BitmapDescriptorFactory.defaultMarker(
+                    BitmapDescriptorFactory.HUE_RED))
+            mSourceMarker = mMap.addMarker(mSourceMarkerOptions)
+        } else {
+            mSourceMarker!!.position = latLng
+        }
+    }
+
+    private fun addDestMarker(latLng: LatLng) {
+        if (mDestMarkerOptions == null) {
+            mDestMarkerOptions = MarkerOptions()
+            mDestMarkerOptions!!.position(latLng)
+            mDestMarkerOptions!!.icon(BitmapDescriptorFactory.defaultMarker(
+                    BitmapDescriptorFactory.HUE_BLUE))
+            mDestMarker = mMap.addMarker(mDestMarkerOptions)
+        } else {
+            mDestMarker!!.position = latLng
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -82,13 +208,17 @@ class MapsActivity : LifecycleActivity(), OnMapReadyCallback {
             return
         }
         when (requestCode) {
-            PLACE_FROM_AUTO_COMPLETE_REQUEST -> {
-                val place = PlaceAutocomplete.getPlace(this, data)
-                mTextViewSourcePlace.text = place.name
+            AR_CODE_PLACE_SOURCE -> {
+                mViewModel.mSourcePlaceId.value = data?.getStringExtra(
+                        SearchAutocompleteActivity.ARG_SELECTED_PLACE_ID)
+                mSourcePlaceTextView.text = data?.getStringExtra(
+                        SearchAutocompleteActivity.ARG_SELECTED_PLACE_PRIMARY_TEXT)
             }
-            PLACE_TO_AUTO_COMPLETE_REQUEST -> {
-                val place = PlaceAutocomplete.getPlace(this, data)
-                mTextViewDestPlace.text = place.name
+            AR_CODE_PLACE_DEST -> {
+                mViewModel.mDestPlaceId.value = data?.getStringExtra(
+                        SearchAutocompleteActivity.ARG_SELECTED_PLACE_ID)
+                mDestPlaceTextView.text = data?.getStringExtra(
+                        SearchAutocompleteActivity.ARG_SELECTED_PLACE_PRIMARY_TEXT)
             }
             else -> {
                 super.onActivityResult(requestCode, resultCode, data)
@@ -101,29 +231,23 @@ class MapsActivity : LifecycleActivity(), OnMapReadyCallback {
         MapsActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults)
     }
 
-    @OnClick(R.id.textview_maps_source_place)
+    @OnClick(R.id.maps_textview_source_place)
     fun pickSourcePlace() {
-        openSearchAutoComplete(PLACE_FROM_AUTO_COMPLETE_REQUEST)
+        openSearchAutoComplete(AR_CODE_PLACE_SOURCE)
     }
 
-    @OnClick(R.id.textview_maps_dest_place)
+    @OnClick(R.id.maps_textview_dest_place)
     fun pickDestPlace() {
-        openSearchAutoComplete(PLACE_TO_AUTO_COMPLETE_REQUEST)
+        openSearchAutoComplete(AR_CODE_PLACE_DEST)
     }
 
     private fun openSearchAutoComplete(requestCode: Int) {
-        try {
-            val typeFilter = AutocompleteFilter.Builder()
-                    .setCountry(PLACE_RESTRICT_COUNTRY_VN)
-                    .build()
-            val intent = PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
-                    .setFilter(typeFilter)
-                    .build(this)
-            startActivityForResult(intent, requestCode)
-        } catch (e : GooglePlayServicesRepairableException) {
-            // TODO handle this case
-        } catch (e : GooglePlayServicesNotAvailableException) {
-            // TODO handle this case
+        if (mViewModel.getLocation().value != null) {
+            SearchAutocompleteActivity.startActivityForResult(this, requestCode,
+                    LatLng(mViewModel.getLocation().value!!.latitude,
+                            mViewModel.getLocation().value!!.longitude))
+        } else {
+            Timber.d("Current location is not available. So you can't use this function")
         }
     }
 

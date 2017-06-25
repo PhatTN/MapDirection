@@ -2,8 +2,11 @@
 <resources>
     <!-- All -->
     <dimen name="all.textview_search_border">4dp</dimen>
-    <dimen name="all.activity_horizontal_margin">16dp</dimen>
-    <dimen name="all.activity_vertical_margin">16dp</dimen>
+    <dimen name="all.activity_horizontal_margin">8dp</dimen>
+    <dimen name="all.activity_vertical_margin">8dp</dimen>
+    <dimen name="all.font_size.small">14sp</dimen>
+    <dimen name="all.font_size.medium">16sp</dimen>
+    <dimen name="all.font_size.large">18sp</dimen>
 
     <!-- Maps screen -->
     <dimen name="maps.searching_wrapper_padding">16dp</dimen>

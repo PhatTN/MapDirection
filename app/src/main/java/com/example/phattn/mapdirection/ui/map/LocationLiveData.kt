@@ -25,6 +25,9 @@ class LocationLiveData(context: Context) : LiveData<Location>(),
             .build()
     private val mLocationRequest: LocationRequest = LocationRequest()
 
+    private var mCurrentLat = Double.NaN
+    private var mCurrentLng = Double.NaN
+
     init {
         mLocationRequest.interval = INTERVAL_UPDATES
         mLocationRequest.fastestInterval = FASTEST_INTERVAL_UPDATES
@@ -47,7 +50,13 @@ class LocationLiveData(context: Context) : LiveData<Location>(),
     override fun onConnected(bundle: Bundle?) {
         // Try to immediately find a location
         val lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient)
-        lastLocation.let { value = lastLocation }
+        lastLocation?.let {
+            if (shouldNotify(lastLocation)) {
+                mCurrentLat = lastLocation.latitude
+                mCurrentLng = lastLocation.longitude
+                value = lastLocation
+            }
+        }
 
         // Request updates if there's someone observing
         if (hasActiveObservers()) {
@@ -64,9 +73,16 @@ class LocationLiveData(context: Context) : LiveData<Location>(),
         // TODO exposing this state
     }
 
-    override fun onLocationChanged(location: Location?) {
+    override fun onLocationChanged(location: Location) {
         // Deliver the location changes
-        value = location
+        if (shouldNotify(location)) {
+            mCurrentLat = location.latitude
+            mCurrentLng = location.longitude
+            value = location
+        }
     }
+
+    private fun shouldNotify(location: Location)
+            = location.latitude != mCurrentLat && location.longitude != mCurrentLng
 
 }

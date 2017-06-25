@@ -41,7 +41,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.search_autocomplete.SearchAutocompleteActivity"></activity>
+        <activity android:name=".ui.search_autocomplete.SearchAutocompleteActivity" />
     </application>
 
 </manifest>
